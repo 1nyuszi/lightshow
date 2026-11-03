@@ -8,16 +8,39 @@ from kasa import Discover
 
 async def run_lighting_script(filename, host, username, password):
     print(f"Connecting to Tapo bulb at {host}...")
+    dev = None
     try:
-        dev = await Discover.discover_single(
-            host, username=username, password=password
-        )
-        await dev.update()
-        print(f"Successfully connected to: {dev.alias or dev.model}\n")
-    except Exception as e:
-        print(f"Failed to connect to device: {e}")
-        return
+        try:
+            dev = await Discover.discover_single(
+                host, username=username, password=password
+            )
+            await dev.update()
+            print(f"Successfully connected to: {dev.alias or dev.model}\n")
+        except Exception as e:
+            print(f"Failed to connect to device: {e}")
+            return
+        await play_script(filename, dev)
+    except asyncio.CancelledError:
+        # asyncio.run cancels this task on the first Ctrl+C.
+        print("\nStopping playback...")
+        raise
+    finally:
+        if dev is not None:
+            try:
+                print("Turning the light off...")
+                try:
+                    await asyncio.wait_for(dev.turn_off(), timeout=10)
+                except Exception as e:
+                    print(f"Could not turn the light off: {e}")
+            finally:
+                # Close the HTTP session before asyncio.run closes the event loop.
+                try:
+                    await dev.disconnect()
+                except Exception as e:
+                    print(f"Could not close the bulb connection: {e}")
 
+
+async def play_script(filename, dev):
     print(f"Looping playback of '{filename}' (press Ctrl+C to stop)...\n")
 
     while True:
@@ -111,9 +134,12 @@ if __name__ == "__main__":
         raise SystemExit(
             "Missing required environment variables: " + ", ".join(missing_variables)
         )
-    asyncio.run(run_lighting_script(
-        filename,
-        os.environ["KASA_HOST"],
-        os.environ["KASA_USERNAME"],
-        os.environ["KASA_PASSWORD"],
-    ))
+    try:
+        asyncio.run(run_lighting_script(
+            filename,
+            os.environ["KASA_HOST"],
+            os.environ["KASA_USERNAME"],
+            os.environ["KASA_PASSWORD"],
+        ))
+    except KeyboardInterrupt:
+        print("Lightshow stopped.")
