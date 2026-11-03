@@ -22,7 +22,7 @@ def player_events(source):
 
 class EditingTests(unittest.TestCase):
     def test_existing_shows_keep_actions_and_timing(self):
-        for path in Path("scripts").glob("*.csv"):
+        for path in (Path(__file__).resolve().parents[1] / "scripts").glob("*.csv"):
             with self.subTest(path=path):
                 source = path.read_text(encoding="utf-8-sig")
                 steps, comments = loads(source)

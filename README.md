@@ -25,4 +25,5 @@ the original playback timing. Saved files may be formatted differently.
 To play a saved show on the bulb, use your configured terminal, for example:
 `python lightshow.py scripts/harmonic.csv`.
 
-Run the editor tests with `python -m unittest -v test_editor`.
+Run all tests from the repository root with `python -m unittest discover -v`.
+Tests live in the `test/` folder.

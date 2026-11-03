@@ -10,7 +10,9 @@ from unittest.mock import AsyncMock, patch
 
 
 # Shutdown tests do not need the bulb library or a network connection.
-spec = importlib.util.spec_from_file_location("player_under_test", Path(__file__).with_name("lightshow.py"))
+spec = importlib.util.spec_from_file_location(
+    "player_under_test", Path(__file__).resolve().parents[1] / "lightshow.py"
+)
 player = importlib.util.module_from_spec(spec)
 with patch.dict("sys.modules", {"kasa": types.SimpleNamespace(Discover=types.SimpleNamespace())}):
     spec.loader.exec_module(player)
